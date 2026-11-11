@@ -1,0 +1,11 @@
+import { NavigationMenu as NavigationMenuPrimitive } from "@base-ui/react/navigation-menu";
+declare function NavigationMenu({ align, className, children, ...props }: NavigationMenuPrimitive.Root.Props & Pick<NavigationMenuPrimitive.Positioner.Props, "align">): any;
+declare function NavigationMenuList({ className, ...props }: React.ComponentPropsWithRef<typeof NavigationMenuPrimitive.List>): any;
+declare function NavigationMenuItem({ className, ...props }: React.ComponentPropsWithRef<typeof NavigationMenuPrimitive.Item>): any;
+declare const navigationMenuTriggerStyle: any;
+declare function NavigationMenuTrigger({ className, children, ...props }: NavigationMenuPrimitive.Trigger.Props): any;
+declare function NavigationMenuContent({ className, ...props }: NavigationMenuPrimitive.Content.Props): any;
+declare function NavigationMenuPositioner({ className, side, sideOffset, align, alignOffset, ...props }: NavigationMenuPrimitive.Positioner.Props): any;
+declare function NavigationMenuLink({ className, ...props }: NavigationMenuPrimitive.Link.Props): any;
+declare function NavigationMenuIndicator({ className, ...props }: React.ComponentPropsWithRef<typeof NavigationMenuPrimitive.Icon>): any;
+export { NavigationMenu, NavigationMenuContent, NavigationMenuIndicator, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, navigationMenuTriggerStyle, NavigationMenuPositioner, };
