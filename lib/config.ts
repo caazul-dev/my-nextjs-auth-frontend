@@ -1,19 +1,21 @@
 export const CONFIG = {
-  API_BASE_URL: process.env.NEXT_PUBLIC_API_URL || "https://backend-125e.onrender.com",
-  ENDPOINTS: {
-    LOGIN: "/auth/login",
-    REGISTER: "/auth/register",
+  API_BASE_URL:
+    process.env.NEXT_PUBLIC_API_URL ||
+    process.env.NEXT_PUBLIC_API_BASE_URL ||
+    "https://nestjs-backend-uu26.onrender.com",
+  STORAGE_KEYS: {
+    ACCESS_TOKEN: "accessToken",
+    REFRESH_TOKEN: "refreshToken",
   },
   ROUTES: {
+    HOME: "/",
     LOGIN: "/login",
     REGISTER: "/register",
     DASHBOARD: "/dashboard",
   },
-};
-
-// Helper function para mag-build ng full API URLs
-export const getApiUrl = (endpoint: string): string => {
-  const baseUrl = CONFIG.API_BASE_URL.replace(/\/$/, "");
-  const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-  return `${baseUrl}${path}`;
-};
+  ENDPOINTS: {
+    LOGIN: "/auth/login",
+    REGISTER: "/auth/register",
+    POSITIONS: "/positions",
+  },
+} as const;

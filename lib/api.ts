@@ -1,57 +1,52 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://nestjs-backend-uu26.onrender.com';
+import { CONFIG } from "./config";
+import { clearTokens, getAccessToken } from "./auth";
 
-// Generic apiClient helper para sa mga susunod na API requests
-export async function apiClient(endpoint: string, options: RequestInit = {}) {
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+interface FetchOptions extends RequestInit {
+  requiresAuth?: boolean;
+}
 
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string>),
+export async function apiClient<T>(
+  endpoint: string,
+  options: FetchOptions = {}
+): Promise<T> {
+  const { requiresAuth = false, headers, ...restOptions } = options;
+
+  const defaultHeaders: Record<string, string> = {
+    "Content-Type": "application/json",
   };
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  if (requiresAuth) {
+    const token = getAccessToken();
+    if (token) {
+      defaultHeaders["Authorization"] = `Bearer ${token}`;
+    }
   }
 
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers,
+  const response = await fetch(`${CONFIG.API_BASE_URL}${endpoint}`, {
+    headers: {
+      ...defaultHeaders,
+      ...headers,
+    },
+    ...restOptions,
   });
+
+  if (response.status === 401 && requiresAuth) {
+    clearTokens();
+    if (typeof window !== "undefined") {
+      window.location.href = CONFIG.ROUTES.LOGIN;
+    }
+    throw new Error("Session expired. Please log in again.");
+  }
+
+  const text = await response.text();
+  const data = text ? JSON.parse(text) : {};
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    const message = Array.isArray(errorData.message)
-      ? errorData.message[0]
-      : errorData.message || 'An error occurred';
-    throw new Error(message);
+    const errorMessage = Array.isArray(data.message)
+      ? data.message.join(", ")
+      : data.message || "An unexpected error occurred.";
+    throw new Error(errorMessage);
   }
 
-  return response.json();
-}
-
-// User Registration Function
-export async function registerUser(data: { username: string; pass: string }) {
-  const payload = {
-    username: data.username,
-    email: `${data.username.replace(/\s+/g, '')}@gmail.com`,
-    password: data.pass,
-  };
-
-  return apiClient('/auth/register', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
-}
-
-// User Login Function
-export async function loginUser(data: { username: string; pass: string }) {
-  const payload = {
-    username: data.username,
-    password: data.pass,
-  };
-
-  return apiClient('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify(payload),
-  });
+  return data as T;
 }
