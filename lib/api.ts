@@ -50,3 +50,20 @@ export async function apiClient<T>(
 
   return data as T;
 }
+
+export async function loginUser(credentials: Record<string, unknown>) {
+  return apiClient<{ accessToken?: string; refreshToken?: string; token?: string }>(
+    CONFIG.ENDPOINTS.LOGIN,
+    {
+      method: "POST",
+      body: JSON.stringify(credentials),
+    }
+  );
+}
+
+export async function registerUser(userData: Record<string, unknown>) {
+  return apiClient<Record<string, unknown>>(CONFIG.ENDPOINTS.REGISTER, {
+    method: "POST",
+    body: JSON.stringify(userData),
+  });
+}
