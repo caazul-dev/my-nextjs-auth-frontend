@@ -2,83 +2,112 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { loginUser } from "@/lib/api"; // I-import si loginUser mula sa api.ts
+import { useRouter } from "next/navigation";
+import { loginUser } from "@/lib/api";
+import { setTokens } from "@/lib/auth";
+import { CONFIG } from "@/lib/config";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     setLoading(true);
-    setError("");
 
     try {
-      const data = await loginUser({ username, pass: password });
+      const data = await loginUser({ username, password });
 
-      // Save token if returned by NestJS
-      if (data.accessToken || data.access_token) {
-        localStorage.setItem("token", data.accessToken || data.access_token);
+      const access = data.accessToken || data.access_token || data.token;
+      const refresh = data.refreshToken || data.refresh_token;
+
+      if (access) {
+        setTokens(access, refresh);
+        localStorage.setItem("token", access);
       }
 
-      // Redirect to dashboard after successful login
-      window.location.href = "/dashboard";
-    } catch (err: any) {
-      setError(err.message || "Login failed");
+      router.push(CONFIG.ROUTES.DASHBOARD);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Invalid credentials.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4 text-gray-900">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md max-w-sm w-full space-y-4">
-        <h1 className="text-2xl font-bold text-center">Login</h1>
-        <p className="text-sm text-gray-500 text-center">Enter your credentials to access your account.</p>
-
-        {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-
-        <div>
-          <label className="block text-sm font-medium mb-1">Username</label>
-          <input
-            type="text"
-            className="w-full p-2 border rounded-md"
-            placeholder="Enter username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-          />
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-md rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Login</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Enter your credentials to access your account.
+          </p>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-1">Password</label>
-          <input
-            type="password"
-            className="w-full p-2 border rounded-md"
-            placeholder="Enter password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition disabled:opacity-50"
-        >
-          {loading ? "Logging in..." : "Login"}
-        </button>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label
+              htmlFor="username"
+              className="mb-1 block text-sm font-medium text-gray-700"
+            >
+              Username
+            </label>
+            <input
+              id="username"
+              type="text"
+              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+            />
+          </div>
 
-        <p className="text-xs text-center text-gray-600">
-          Don't have an account?{" "}
-          <Link href="/register" className="text-blue-600 hover:underline">
+          <div>
+            <label
+              htmlFor="password"
+              className="mb-1 block text-sm font-medium text-gray-700"
+            >
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-black focus:outline-none"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full rounded-lg bg-black py-2.5 text-sm font-medium text-white hover:bg-gray-800 disabled:opacity-50"
+          >
+            {loading ? "Logging in..." : "Login"}
+          </button>
+        </form>
+
+        <p className="mt-6 text-center text-sm text-gray-500">
+          Don&apos;t have an account?{" "}
+          <Link
+            href={CONFIG.ROUTES.REGISTER}
+            className="font-medium text-gray-900 underline hover:text-black"
+          >
             Register
           </Link>
         </p>
-      </form>
+      </div>
     </div>
   );
 }
