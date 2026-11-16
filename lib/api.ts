@@ -1,5 +1,5 @@
 import { CONFIG } from "./config";
-import { clearTokens, getAccessToken } from "./auth";
+import { clearTokens, getAccessToken, setTokens } from "./auth";
 
 interface FetchOptions extends RequestInit {
   requiresAuth?: boolean;
@@ -51,14 +51,28 @@ export async function apiClient<T>(
   return data as T;
 }
 
+export interface LoginResponse {
+  accessToken?: string;
+  access_token?: string;
+  refreshToken?: string;
+  refresh_token?: string;
+  token?: string;
+  [key: string]: unknown;
+}
+
 export async function loginUser(credentials: Record<string, unknown>) {
-  return apiClient<{ accessToken?: string; refreshToken?: string; token?: string }>(
-    CONFIG.ENDPOINTS.LOGIN,
-    {
-      method: "POST",
-      body: JSON.stringify(credentials),
-    }
-  );
+  const data = await apiClient<LoginResponse>(CONFIG.ENDPOINTS.LOGIN, {
+    method: "POST",
+    body: JSON.stringify(credentials),
+  });
+
+  const access = data.accessToken || data.access_token || data.token;
+  const refresh = data.refreshToken || data.refresh_token;
+  if (access) {
+    setTokens(access, refresh);
+  }
+
+  return data;
 }
 
 export async function registerUser(userData: Record<string, unknown>) {
